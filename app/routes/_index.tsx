@@ -1,4 +1,22 @@
-import type { MetaFunction } from "@remix-run/node";
+import { json, LoaderFunctionArgs, type MetaFunction } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
+
+const eTag = "1234";
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  console.log("node version:", process.version);
+  if (request.headers.get("If-None-Match") === eTag) {
+    throw new Response(null, { status: 304 });
+  }
+  return json(
+    { message: "Hello from the loader!" },
+    {
+      status: 200,
+      headers: {
+        eTag,
+      },
+    }
+  );
+};
 
 export const meta: MetaFunction = () => {
   return [
@@ -8,9 +26,11 @@ export const meta: MetaFunction = () => {
 };
 
 export default function Index() {
+  const { message } = useLoaderData<typeof loader>();
   return (
     <div className="font-sans p-4">
       <h1 className="text-3xl">Welcome to Remix</h1>
+      <p>{message}</p>
       <ul className="list-disc mt-4 pl-6 space-y-2">
         <li>
           <a
